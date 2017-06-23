@@ -1,18 +1,5 @@
 <?php
-/**
- * @package Racketeers_Scheduler
- * @version 0.0
- */
-/*
-Plugin Name: Racketeers 
-Plugin URI: 
-Description: This is a plugin to handle scheduling for the racketeers
-Version: 0.0
-Author URI: 
-*/
 
-add_action( 'show_user_profile', 'racketeers_extra_user_profile_fields' );
-add_action( 'edit_user_profile', 'racketeers_extra_user_profile_fields' );
 function racketeers_extra_user_profile_fields( $user ) {
 ?>
   <h3><?php _e("Extra profile information", "blank"); ?></h3>
