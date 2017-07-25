@@ -26,7 +26,48 @@ function nt_install(){
 	global $nt_db_version;
 	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 
-	$match_table_name = $wpdb->prefix . "match";    
+/* kbl todo - add group table, group info
+    Name
+    Organizer
+    Day of Week
+    Time
+    Duration
+    --  Note Day of Week should inform date selection for matches
+     */
+
+    $courtTimes[] = array (
+    	"7am",
+    	"8am",
+    	"9am",
+    	"10am",
+    	"11am",
+    	"12pm",
+    	"1:30pm",
+    	"2:30pm",
+    	"3:30pm",
+    	"4:30pm",
+    	"5:30pm",
+    	"6:30pm",
+    	"7:00pm",
+    	"7:30pm",
+    	"8:00pm",
+    	"8:30pm",
+    	"9:00pm",
+    	"9:30pm"
+    );
+	$group_table_name = $wpdb->prefix . "group";    
+	$sql = 	"CREATE TABLE $group_table_name(
+		groupID    int not null auto_increment,
+		organizerID int,
+		groupDay int,   /*(0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday) */
+		groupTime int,  /* see array above */
+		groupMatchDuration ENUM ('sixty', 'ninety'),
+		PRIMARY KEY(groupID)
+	) engine = InnoDB;";
+    dbDelta( $sql );
+
+    
+   	$match_table_name = $wpdb->prefix . "match";    
 	$sql = 	"CREATE TABLE $match_table_name(
 		matchID    int not null auto_increment,
 		matchDate date,
@@ -42,10 +83,6 @@ function nt_install(){
 		PRIMARY KEY(matchID)
 	) engine = InnoDB;";
     dbDelta( $sql );
-
-
-    /* kbl todo - add group table */
-   	   
    add_option( "nt_db_version", $nt_db_version );
 }
 register_activation_hook( __FILE__, 'nt_install' );
@@ -64,7 +101,10 @@ function nt_deactivate()
 	/** drop this first before deleting event **/    
 	$match_table_name = $wpdb->prefix . "match";    
     $sql = "DROP TABLE IF EXISTS $match_table_name;";
+    $wpdb->query( $sql );
 
+	$group_table_name = $wpdb->prefix . "group";      
+    $sql = "DROP TABLE IF EXISTS $group_table_name;";
     /* kbl todo - add group table */
 
     $wpdb->query( $sql );
