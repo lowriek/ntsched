@@ -10,6 +10,8 @@ Description: This is a plugin to handle scheduling for the racketeers
 Version: 0.0
 Author URI: 
 */
+
+
 global $nt_db_version;
 $nt_db_version = "1.0";
 global $debug;
@@ -40,6 +42,9 @@ function nt_install(){
 		PRIMARY KEY(matchID)
 	) engine = InnoDB;";
     dbDelta( $sql );
+
+
+    /* kbl todo - add group table */
    	   
    add_option( "nt_db_version", $nt_db_version );
 }
@@ -59,6 +64,9 @@ function nt_deactivate()
 	/** drop this first before deleting event **/    
 	$match_table_name = $wpdb->prefix . "match";    
     $sql = "DROP TABLE IF EXISTS $match_table_name;";
+
+    /* kbl todo - add group table */
+
     $wpdb->query( $sql );
 }
 register_deactivation_hook( __FILE__, 'nt_deactivate');
@@ -69,7 +77,7 @@ register_deactivation_hook( __FILE__, 'nt_deactivate');
 function safely_add_stylesheet() {
 	wp_enqueue_style( 'prefix-style', plugins_url('css/ntstyle.css', __FILE__) );
 }
-//  add_action( 'wp_enqueue_scripts', 'safely_add_stylesheet' ); /* maybe later */
+//add_action( 'wp_enqueue_scripts', 'safely_add_stylesheet' ); /* maybe later */
 
 /**
  * supposedly the correct way to load jquery 
@@ -81,8 +89,7 @@ function load_jquery() {
 	wp_enqueue_script( 'jquery-ui-datepicker' );
 	wp_enqueue_script( 'jquery-ui-accordion' );
 }
-// add_action( 'wp_enqueue_scripts', 'load_jquery' ); /* maybe later */
-
+add_action( 'wp_enqueue_scripts', 'load_jquery' ); 
 /**
  * load_nt() - this loads jquery for nt form validation
  **/
@@ -90,7 +97,7 @@ function load_nt(){
     wp_enqueue_script( 'nt_script', plugins_url( 'js/formvalidate.js' , __FILE__ ), array(), null, true);
     wp_enqueue_script( 'nt_script', plugins_url( 'js/reportsupport.js' , __FILE__ ), array(), null, true);
 }
-// add_action( 'wp_enqueue_scripts', 'load_nt' ); /* maybe later */
+add_action( 'wp_enqueue_scripts', 'load_nt' ); 
 
 /**
  * nt_admin_init() - do initialization needed for nt admin pages
@@ -122,17 +129,12 @@ add_action( 'edit_user_profile', 'racketeers_extra_user_profile_fields' );
 
 /* wire in the match stuff */
 include 'nt_match.php';
-add_shortcode( 'nt_display_matches',   'nt_display_matches' );
+add_shortcode( 'nt_match_hub',   'nt_match_hub' );
 
-function testmyshortcode(){
-	echo "<h1>a;lksdjf ;oi o</h1>";
-}
-
-add_shortcode( 'testmyshortcode',   'testmyshortcode' );
 
 /**
  * Redirect user after successful login. - this needs to be after the include
- * for ifcrush_user_support.php because it uses the user functions
+ * for nt_user_support.php because it uses the user functions
  *
  * @param string $redirect_to URL to redirect to.
  * @param string $request URL the user is coming from.

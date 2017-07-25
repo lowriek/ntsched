@@ -23,21 +23,30 @@
 	) engine = InnoDB;";
  **/
  
+ function nt_match_hub(  ) {
+		global $debug;
 
+		/* handle form request if pending */
+		if ( isset( $_POST['action'] ) ) {
+			nt_match_handle_form();
+		} 
+
+		nt_display_matches();
+}
 /** 
  * Display matches for a group
  * Args - group name
  *
  **/
 function nt_display_matches( /* $group_name */ ) {
-	
+
 	global $wpdb;
-	
+
 	$match_table_name = $wpdb->prefix . "match";
 	/** KBL TODO - add group names SELECT * FROM $match_table_name where ID='$_letters'";  **/
 	$query = "SELECT * FROM $match_table_name";
 	$allmatches = $wpdb->get_results( $query );
-	
+
 	create_match_table_header(); 
 	create_match_add_row( /* $group_name */ );
 
@@ -62,18 +71,17 @@ function nt_display_matches( /* $group_name */ ) {
 function nt_match_handle_form( /* $group_name */ ) { 
 
 	global $debug;
-	if ( $debug ){
+	if (  ! $debug ){
 			echo "[nt_match_handle_form] ";
 			echo "<pre>"; print_r($_POST); echo "</pre>";
 	}
-	
+
 	/** Pull common data out of the form, get specific data in handlers if necessary **/
 	$thismatch = array( 
 				/** matchID will be null on insert **/
-				'matchID'	=>  ( isset( $_POST['matchID'] ) ? $_POST['matchID']: "" ),
-				'matchDate' =>  $_POST['matchDate'],
-				'title'  	=>  $_POST['matchTitle']
-				/** KBL TODO  - add group **/
+				'matchID'		=>  ( isset( $_POST['matchID'] ) ? $_POST['matchID']: "" ),
+				'matchDate' 	=>  $_POST['matchDate'],
+
 	); // put the form input into an array
 
 	switch ( $_POST['action'] ) {
@@ -88,6 +96,10 @@ function nt_match_handle_form( /* $group_name */ ) {
 		case "Add Match":
 			addMatch( $thismatch );
 			break;
+
+		case "Show Players":
+			showPlayerMatch( $thismatch );
+			break;
 			
 		default:
 			echo "[nt_match_handle_form]: bad action";
@@ -100,14 +112,28 @@ function nt_match_handle_form( /* $group_name */ ) {
 /** Event_handler_form helpers - these are CRUD for DB */
 function addMatch( $thismatch ) {
 	global $wpdb;
+	global $debug;
+
+	if ( ! $debug ){
+			echo "[addMatch] ";
+			echo "<pre>"; print_r($_POST); echo "</pre>";
+	}
 	
 	$table_name = $wpdb->prefix . "match";
 	$rows_affected = $wpdb->insert( $table_name, $thismatch );
 	
 	if (0 == $rows_affected ) {
-		echo "INSERT ERROR for " . $thismatch['matchDate'];
+		echo "INSERT ERROR for " . $thismatch['matchDate'] . " " .$thismatch['matchHost'];
+		if ( $debug ){
+			echo "[addMatch] Fail ";
+			echo "<pre>"; print_r($_POST); echo "</pre>";
+		}
 	}
+
+	
+
 	return $rows_affected;
+
 } // adds a match to the table if addMatch is tagged
 
 function updateMatch( $thismatch ) {
@@ -125,8 +151,10 @@ function deleteMatch( $thismatch ) {
 	$wpdb->delete( $table_name, $thismatch );
 } // deletes a match if deleteMatch is tagged
 
-/**************************/
 
+function showPlayerMatch ( $thismatch ) {
+	
+}
 
 /** 
  ** create_match_table_header()
@@ -159,9 +187,6 @@ function create_match_add_row() {
 				<div class="nttablecellnarrow">
 					<input type="text" name="matchDate" id="addDate" class="datepicker" value="select date">
 				</div>
-				<div class="nttablecellnarrow">
-					<input type="text" name="matchTitle" id="addMatchTitle" size=20 value="enter match title"/>
-				</div>
 				<div class="nttablecellauto">
 					<input type="submit" name="action" id="addMatchButton" value="Add Match"/>
 				</div>
@@ -176,17 +201,14 @@ function create_match_add_row() {
  ** Dump the match passed with options to change match details.
  ** KBL TODO - we may dump players here
  **/
-function create_match_table_row($match) {
+function create_match_table_row( $match ) {
 	?>
 		<div class="nttablerow">
 			<form method="post" class="matchForm">
 				<div class="matchtablecellnarrow">
 					<input type="text" name="matchDate" class="datepicker" value="<?php echo $match->matchDate;?>"/>
-				</div>
-				<div class="inttablecellnarrow">
-					<input type="text" name="matchTitle" size=20 value="<?php echo $match->title; ?>"/>
-					<input type="hidden" name="matchID" value="<?php echo $match->matchID; ?>" />
-				</div>				
+					<input type="hidden" name="matchID" value="<?php echo $match->matchID;?>"/>
+				</div>		
 				<div class="nttablecellauto">
 					<input type="submit" name="action" value="Update Match"/>
 					<input type="submit" name="action" value="Delete Match"/>
