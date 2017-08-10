@@ -164,8 +164,8 @@ add_action( 'edit_user_profile', 'racketeers_extra_user_profile_fields' );
 // include 'ifcrush_pnm.php';  /** This has all the Rushee table support **/
 // add_shortcode( 'ifcrush_pnm',   'ifcrush_pnm' );
 
-// include 'ifcrush_admin.php';  /** This has all the admin support **/
-// add_action( 'admin_menu', 'ifcrush_admin_menu' );
+// include 'nt_admin.php';  /** This has all the admin support **/
+add_action( 'admin_menu', 'nt_admin_menu' );
 
 /* wire in the match stuff */
 include 'nt_match.php';

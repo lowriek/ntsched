@@ -94,3 +94,30 @@ function racketeers_save_extra_user_profile_fields( $user_id ) {
   }
   return true;
 }
+
+
+
+function nt_admin_menu() {
+	//add_management_page( $page_title, $menu_title, $capability, $menu_slug, $function );
+	add_management_page( "Group Tennis Tools", "Group Tennis Reports", 'manage_options', 'nt_tool', 'nt_admin_tools');
+	
+}
+
+function nt_admin_tools() {
+	if ( !current_user_can( 'manage_options' ) )  {
+		wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+	}
+	echo '<div class="wrap">';
+	echo '<div id="accordion">
+	';
+	
+	// display a list of frats.  Then allow the admin to show the report for each.
+	echo 'tools to be added here';
+	
+	echo '
+	</div>
+	</div>';
+
+}
+
+
