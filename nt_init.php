@@ -35,6 +35,7 @@ function nt_install(){
     --  Note Day of Week should inform date selection for matches
      */
 
+    /* These court times are from tennisbookings, note that 90 minutes is not available for all slots */
     $courtTimes[] = array (
     	"7am",
     	"8am",
@@ -70,8 +71,9 @@ function nt_install(){
    	$match_table_name = $wpdb->prefix . "match";    
 	$sql = 	"CREATE TABLE $match_table_name(
 		matchID    int not null auto_increment,
+		groupID    int not null,    /* matches must be associated with one group */
 		matchDate date,
-		matchTime int,   /* KBL todo - create array of possible court times */
+		matchTime int,   /* This is the array index of the court times above */
 		matchHost int,
 		matchPlayer1 int,
 		matchPlayer2 int,
@@ -80,6 +82,7 @@ function nt_install(){
 		player1Status ENUM('confirmed', 'unconfirmed', 'needsub'),
 		player2Status ENUM('confirmed', 'unconfirmed', 'needsub'),
 		player3Status ENUM('confirmed', 'unconfirmed', 'needsub'),
+		FOREIGN KEY(groupID) references $group_table_name(groupID),
 		PRIMARY KEY(matchID)
 	) engine = InnoDB;";
     dbDelta( $sql );
@@ -167,9 +170,13 @@ add_action( 'edit_user_profile', 'racketeers_extra_user_profile_fields' );
 // include 'nt_admin.php';  /** This has all the admin support **/
 add_action( 'admin_menu', 'nt_admin_menu' );
 
+/* wire in the group stuff */
+include 'nt_group.php';
+add_shortcode( 'nt_group_hub', 'nt_group_hub' );
+
 /* wire in the match stuff */
 include 'nt_match.php';
-add_shortcode( 'nt_match_hub',   'nt_match_hub' );
+add_shortcode( 'nt_match_hub', 'nt_match_hub' );
 
 
 /**

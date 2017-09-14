@@ -40,6 +40,7 @@
  **/
 function nt_display_matches( /* $group_name */ ) {
 
+	global $debug;
 	global $wpdb;
 
 	$match_table_name = $wpdb->prefix . "match";
@@ -179,6 +180,8 @@ function create_match_table_footer() {
  ** create match add row()
  ** This function creates a row in the table with a form to add a match
  **  When you add a match, you add data, time, title.  Players add themselves later.
+ **  Each match must have a groupID as all matches must be associated with one group.
+ **  KBL TODO - how to find groupID?
  **/
 function create_match_add_row() {
 	?>
