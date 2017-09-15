@@ -17,6 +17,15 @@ $nt_db_version = "1.0";
 global $debug;
 $debug = 1;
 
+
+/* wire in the group stuff */
+include 'nt_group.php';
+add_shortcode( 'nt_group_hub', 'nt_group_hub' );
+
+/* wire in the match stuff */
+include 'nt_match.php';
+add_shortcode( 'nt_match_hub', 'nt_match_hub' );
+
 /**
  * nt_install() - creates the match table
  **/
@@ -26,67 +35,12 @@ function nt_install(){
 	global $nt_db_version;
 	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 
-/* kbl todo - add group table, group info
-    Name
-    Organizer
-    Day of Week
-    Time
-    Duration
-    --  Note Day of Week should inform date selection for matches
-     */
-
-    /* These court times are from tennisbookings, note that 90 minutes is not available for all slots */
-    $courtTimes[] = array (
-    	"7am",
-    	"8am",
-    	"9am",
-    	"10am",
-    	"11am",
-    	"12pm",
-    	"1:30pm",
-    	"2:30pm",
-    	"3:30pm",
-    	"4:30pm",
-    	"5:30pm",
-    	"6:30pm",
-    	"7:00pm",
-    	"7:30pm",
-    	"8:00pm",
-    	"8:30pm",
-    	"9:00pm",
-    	"9:30pm"
-    );
-	$group_table_name = $wpdb->prefix . "group";    
-	$sql = 	"CREATE TABLE $group_table_name(
-		groupID    int not null auto_increment,
-		organizerID int,
-		groupDay int,   /*(0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday) */
-		groupTime int,  /* see array above */
-		groupMatchDuration ENUM ('sixty', 'ninety'),
-		PRIMARY KEY(groupID)
-	) engine = InnoDB;";
-    dbDelta( $sql );
-
+	/* create the group table */
+	nt_group_create_table( $wpdb->prefix . "group" );    
+	nt_match_create_table( $wpdb->prefix . "match", $wpdb->prefix . "group" );    
     
-   	$match_table_name = $wpdb->prefix . "match";    
-	$sql = 	"CREATE TABLE $match_table_name(
-		matchID    int not null auto_increment,
-		groupID    int not null,    /* matches must be associated with one group */
-		matchDate date,
-		matchTime int,   /* This is the array index of the court times above */
-		matchHost int,
-		matchPlayer1 int,
-		matchPlayer2 int,
-		matchPlayer3 int,
-		hostStatus ENUM('confirmed', 'unconfirmed', 'needsub'),
-		player1Status ENUM('confirmed', 'unconfirmed', 'needsub'),
-		player2Status ENUM('confirmed', 'unconfirmed', 'needsub'),
-		player3Status ENUM('confirmed', 'unconfirmed', 'needsub'),
-		FOREIGN KEY(groupID) references $group_table_name(groupID),
-		PRIMARY KEY(matchID)
-	) engine = InnoDB;";
-    dbDelta( $sql );
-   add_option( "nt_db_version", $nt_db_version );
+   
+    add_option( "nt_db_version", $nt_db_version );
 }
 register_activation_hook( __FILE__, 'nt_install' );
 
@@ -99,18 +53,12 @@ register_activation_hook( __FILE__, 'nt_install' );
  **/
 function nt_deactivate()
 {
-    global $wpdb; 
     
-	/** drop this first before deleting event **/    
-	$match_table_name = $wpdb->prefix . "match";    
-    $sql = "DROP TABLE IF EXISTS $match_table_name;";
-    $wpdb->query( $sql );
+	/** drop this first before deleting group **/    
+	nt_match_delete_table();
 
-	$group_table_name = $wpdb->prefix . "group";      
-    $sql = "DROP TABLE IF EXISTS $group_table_name;";
-    /* kbl todo - add group table */
+	nt_group_delete_table();
 
-    $wpdb->query( $sql );
 }
 register_deactivation_hook( __FILE__, 'nt_deactivate');
 
@@ -170,13 +118,7 @@ add_action( 'edit_user_profile', 'racketeers_extra_user_profile_fields' );
 // include 'nt_admin.php';  /** This has all the admin support **/
 add_action( 'admin_menu', 'nt_admin_menu' );
 
-/* wire in the group stuff */
-include 'nt_group.php';
-add_shortcode( 'nt_group_hub', 'nt_group_hub' );
 
-/* wire in the match stuff */
-include 'nt_match.php';
-add_shortcode( 'nt_match_hub', 'nt_match_hub' );
 
 
 /**

@@ -9,6 +9,7 @@
  **
  ** CREATE TABLE $match_table_name(
 		matchID    int not null auto_increment,
+		groupID    int not null,    // matches must be associated with one group 
 		matchDate date,
 		matchTime int,
 		matchHost int,
@@ -19,10 +20,44 @@
 		player1Status ENUM('confirmed', 'unconfirmed', 'needsub'),
 		player2Status ENUM('confirmed', 'unconfirmed', 'needsub'),
 		player3Status ENUM('confirmed', 'unconfirmed', 'needsub'),
+		FOREIGN KEY(groupID) references $group_table_name(groupID),
+
 		PRIMARY KEY(matchID)
 	) engine = InnoDB;";
  **/
  
+function nt_match_create_table ( $match_table_name, $group_table_name) {
+	
+	$sql = 	"CREATE TABLE $match_table_name(
+		matchID    int not null auto_increment,
+		groupID    int not null,    /* matches must be associated with one group */
+		matchDate date,
+		matchTime int,   /* This is the array index of the court times above */
+		matchHost int,
+		matchPlayer1 int,
+		matchPlayer2 int,
+		matchPlayer3 int,
+		hostStatus ENUM('confirmed', 'unconfirmed', 'needsub'),
+		player1Status ENUM('confirmed', 'unconfirmed', 'needsub'),
+		player2Status ENUM('confirmed', 'unconfirmed', 'needsub'),
+		player3Status ENUM('confirmed', 'unconfirmed', 'needsub'),
+		FOREIGN KEY(groupID) references $group_table_name(groupID),
+		PRIMARY KEY(matchID)
+	) engine = InnoDB;";
+    dbDelta( $sql );
+
+}
+/**  nt_match_delete_table()
+ **  matching delete function for match table
+ **/
+function nt_match_delete_table() {
+	global $wpdb; 
+
+   	$match_table_name = $wpdb->prefix . "matchR";    
+    $sql = "DROP TABLE IF EXISTS $match_table_name;";
+    $wpdb->query( $sql );
+}
+
  function nt_match_hub(  ) {
 		global $debug;
 
