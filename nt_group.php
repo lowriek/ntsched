@@ -213,17 +213,32 @@ function nt_group_handle_form( $action ) {
 
 	if ( $debug ) showgroup( $thisgroup );
 
+	$groupOrganizer = nt_is_user_organizer ();
+	
+
 	switch ( $action ) {
 		case "Update Group":
-			updateGroup( $thisgroup );
+			if ( false == $groupOrganizer ) {
+				echo "<h2>sorry you are not an organizer, so update group failed</h2>";
+			} else {
+				updateGroup( $thisgroup );
+			}
 			break;
 			
 		case "Delete Group":
-			deleteGroup( $thisgroup );
+			if ( false == $groupOrganizer ) {
+				echo "<h2>sorry you are not an organizer, so delete group failed</h2>";
+			} else {
+				deleteGroup( $thisgroup );
+			}
 			break;
 			
 		case "Add Group":
-			addGroup( $thisgroup );
+			if ( false == $groupOrganizer ) {
+				echo "<h2>sorry you are not an organizer, so add group failed</h2>";
+			} else {
+				addGroup( $thisgroup );
+			}
 			break;
 
 		case "Show Group details":
@@ -240,10 +255,13 @@ function nt_group_handle_form( $action ) {
 
 /* figure out if the insert is for a known organizer  
  * think about how an admin can do this to select known organizers.
+ * think that a user with the role author is an organizer
+ * and a user with the role subscriber is player.
+ * admins can do anything.
  */
 function nt_is_user_organizer(){
 
-	$current_user_id =  get_current_user_id($current_user_id);
+	$current_user_id =  get_current_user_id();
 	$user_info = get_userdata($current_user_id );
 
 	if ( ! $user_info ) {
@@ -252,9 +270,9 @@ function nt_is_user_organizer(){
 
 	$user_role = $user_info->roles;
 
-	if 	( 	in_array ( 'administrator' , 	$user_role ) ||
-		 	in_array ( 'author'        , 	$user_role ) ||
-		 	in_array ( 'organizer'     , 	$user_role ) 
+	if 	( 	in_array ( 'administrator' , 	$user_role ) 
+		 	|| in_array ( 'author'        , 	$user_role )
+		 //	|| in_array ( 'organizer'     , 	$user_role ) 
 		)
 		return true;
 
@@ -271,11 +289,7 @@ function addGroup( $thisgroup ) {
 			echo "<pre>"; print_r($_POST); echo "</pre>";
 	}
 
-	$groupOrganizer = nt_is_user_organizer ();
-	if ( false == $groupOrganizer ) {
-		echo "<h2>sorry you are not an organizer, so add group failed</h2>";
-		return false;
-	}
+	
 	
 	$thisgroup['organizerID'] = $groupOrganizer;
 
