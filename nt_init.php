@@ -16,6 +16,9 @@ global $nt_db_version;
 $nt_db_version = "1.0";
 global $debug;
 $debug = 1;
+define("GROUP_TABLE_NAME","group");
+define("MATCH_TABLE_NAME","match");
+
 
 
 /* wire in the group stuff */
@@ -36,8 +39,8 @@ function nt_install(){
 	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 
 	/* create the group table */
-	nt_group_create_table( $wpdb->prefix . "group" );    
-	nt_match_create_table( $wpdb->prefix . "match", $wpdb->prefix . "group" );    
+	nt_group_create_table( $wpdb->prefix . constant( "GROUP_TABLE_NAME" ));    
+	nt_match_create_table( $wpdb->prefix . constant( "MATCH_TABLE_NAME" ) , $wpdb->prefix . constant( "GROUP_TABLE_NAME" ) );    
     
    
     add_option( "nt_db_version", $nt_db_version );
@@ -53,12 +56,10 @@ register_activation_hook( __FILE__, 'nt_install' );
  **/
 function nt_deactivate()
 {
-    
-	/** drop this first before deleting group **/    
-	nt_match_delete_table();
+	global $wpdb;
 
-	nt_group_delete_table();
-
+	nt_match_delete_table( $wpdb->prefix . constant( "MATCH_TABLE_NAME" ) );
+	nt_group_delete_table( $wpdb->prefix . constant( "GROUP_TABLE_NAME" ) );
 }
 register_deactivation_hook( __FILE__, 'nt_deactivate');
 

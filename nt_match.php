@@ -11,7 +11,6 @@
 		matchID    int not null auto_increment,
 		groupID    int not null,    // matches must be associated with one group 
 		matchDate date,
-		matchTime int,
 		matchHost int,
 		matchPlayer1 int,
 		matchPlayer2 int,
@@ -32,7 +31,6 @@ function nt_match_create_table ( $match_table_name, $group_table_name) {
 		matchID    int not null auto_increment,
 		groupID    int not null,    /* matches must be associated with one group */
 		matchDate date,
-		matchTime int,   /* This is the array index of the court times above */
 		matchHost int,
 		matchPlayer1 int,
 		matchPlayer2 int,
@@ -50,10 +48,9 @@ function nt_match_create_table ( $match_table_name, $group_table_name) {
 /**  nt_match_delete_table()
  **  matching delete function for match table
  **/
-function nt_match_delete_table() {
+function nt_match_delete_table( $match_table_name ) {
 	global $wpdb; 
 
-   	$match_table_name = $wpdb->prefix . "matchR";    
     $sql = "DROP TABLE IF EXISTS $match_table_name;";
     $wpdb->query( $sql );
 }
@@ -106,8 +103,12 @@ function nt_display_matches( /* $group_name */ ) {
  **/
 function nt_match_handle_form( /* $group_name */ ) { 
 
+
+	if ( ! isset( $_POST['matchAction'] ) ) return;
+
+
 	global $debug;
-	if (  ! $debug ){
+	if (  $debug ){
 			echo "[nt_match_handle_form] ";
 			echo "<pre>"; print_r($_POST); echo "</pre>";
 	}
@@ -120,7 +121,9 @@ function nt_match_handle_form( /* $group_name */ ) {
 
 	); // put the form input into an array
 
-	switch ( $_POST['action'] ) {
+
+
+	switch ( $_POST['matchAction'] ) {
 		case "Update Match":
 			updateMatch( $thismatch );
 			break;
@@ -226,7 +229,7 @@ function create_match_add_row() {
 					<input type="text" name="matchDate" id="addDate" class="datepicker" value="select date">
 				</div>
 				<div class="nttablecellauto">
-					<input type="submit" name="action" id="addMatchButton" value="Add Match"/>
+					<input type="submit" name="matchAction" id="addMatchButton" value="Add Match"/>
 				</div>
 			</form>
 		</div><!-- end nttableaddrow -->
@@ -248,9 +251,9 @@ function create_match_table_row( $match ) {
 					<input type="hidden" name="matchID" value="<?php echo $match->matchID;?>"/>
 				</div>		
 				<div class="nttablecellauto">
-					<input type="submit" name="action" value="Update Match"/>
-					<input type="submit" name="action" value="Delete Match"/>
-					<input type="submit" name="action" value="Show Players"/>
+					<input type="submit" name="matchAction" value="Update Match"/>
+					<input type="submit" name="matchAction" value="Delete Match"/>
+					<input type="submit" name="matchAction" value="Show Players"/>
 				</div>
 			</form>
 		</div>
