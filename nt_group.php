@@ -238,6 +238,29 @@ function nt_group_handle_form( $action ) {
 
 /**************************/
 
+/* figure out if the insert is for a known organizer  
+ * think about how an admin can do this to select known organizers.
+ */
+function nt_is_user_organizer(){
+
+	$current_user_id =  get_current_user_id($current_user_id);
+	$user_info = get_userdata($current_user_id );
+
+	if ( ! $user_info ) {
+		return false;
+	}
+
+	$user_role = $user_info->roles;
+
+	if 	( 	in_array ( 'administrator' , 	$user_role ) ||
+		 	in_array ( 'author'        , 	$user_role ) ||
+		 	in_array ( 'organizer'     , 	$user_role ) 
+		)
+		return true;
+
+	return false;
+}
+
 /** Event_handler_form helpers - these are CRUD for DB */
 function addGroup( $thisgroup ) {
 	global $wpdb;
@@ -247,7 +270,15 @@ function addGroup( $thisgroup ) {
 			echo "[addGroup] ";
 			echo "<pre>"; print_r($_POST); echo "</pre>";
 	}
+
+	$groupOrganizer = nt_is_user_organizer ();
+	if ( false == $groupOrganizer ) {
+		echo "<h2>sorry you are not an organizer, so add group failed</h2>";
+		return false;
+	}
 	
+	$thisgroup['organizerID'] = $groupOrganizer;
+
 	$rows_affected = $wpdb->insert( $wpdb->prefix . constant( "GROUP_TABLE_NAME" ), $thisgroup );
 	
 	if (0 == $rows_affected ) {
