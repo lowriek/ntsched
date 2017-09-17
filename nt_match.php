@@ -186,7 +186,7 @@ function find_match_dates( $thismonth, $thisyear, $groupiddayofweek){
 
 	// return the array.
 }
-
+/*
 $dayofweek = date('w', strtotime($date));
 $result    = date('Y-m-d', strtotime(($day - $dayofweek).' day', strtotime($date)));
 
@@ -197,7 +197,7 @@ function updateMatch( $thismatch ) {
 	$where = array( 'matchID' => $thismatch['matchID'] );
 	$wpdb->update( $table_name, $thismatch, $where );
 } // updates a match with a matching matchID if updateMatch is tagged
-
+*/
 function deleteMatch( $thismatch ) {
 	global $wpdb;
 	

@@ -110,7 +110,7 @@ function nt_group_create_table ( $group_table_name ) {
 	  
 	$sql = 	"CREATE TABLE $group_table_name(
 		groupID    int not null auto_increment,
-		organizerID int,
+		groupOrganizerID int,
 		groupName  varchar(50),
 		groupDay int,   /*(0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday) */
 		groupTime int,  /* see array above */
@@ -213,31 +213,32 @@ function nt_group_handle_form( $action ) {
 
 	if ( $debug ) showgroup( $thisgroup );
 
-	$groupOrganizer = nt_is_user_organizer ();
 	
-
+	
 	switch ( $action ) {
 		case "Update Group":
-			if ( false == $groupOrganizer ) {
-				echo "<h2>sorry you are not an organizer, so update group failed</h2>";
-			} else {
-				updateGroup( $thisgroup );
-			}
-			break;
-			
 		case "Delete Group":
-			if ( false == $groupOrganizer ) {
-				echo "<h2>sorry you are not an organizer, so delete group failed</h2>";
-			} else {
-				deleteGroup( $thisgroup );
-			}
-			break;
-			
 		case "Add Group":
-			if ( false == $groupOrganizer ) {
-				echo "<h2>sorry you are not an organizer, so add group failed</h2>";
-			} else {
-				addGroup( $thisgroup );
+			$thisgroup['groupOrganizerID'] = nt_is_user_organizer ();
+			if ( false == $thisgroup['groupOrganizerID'] ) {
+				echo "<h2>sorry you are not an organizer, no permission to modify groups</h2>";
+				return;
+			} 
+			switch ( $action ) {
+				case "Update Group":
+					updateGroup( $thisgroup );
+					break;
+
+				case "Delete Group":
+					deleteGroup( $thisgroup );
+					break;
+
+				case "Add Group":
+					addGroup( $thisgroup );
+					break;
+				default:
+					break; // really can't get here...
+				
 			}
 			break;
 
@@ -288,11 +289,7 @@ function addGroup( $thisgroup ) {
 			echo "[addGroup] ";
 			echo "<pre>"; print_r($_POST); echo "</pre>";
 	}
-
 	
-	
-	$thisgroup['organizerID'] = $groupOrganizer;
-
 	$rows_affected = $wpdb->insert( $wpdb->prefix . constant( "GROUP_TABLE_NAME" ), $thisgroup );
 	
 	if (0 == $rows_affected ) {
@@ -342,6 +339,7 @@ function create_group_table_header() {
 		<div class="nttable">
 			<div class="nttablerow">
 				<div class="nttablecellnarrow">Name</div>
+				<div class="nttablecellnarrow">Organized by</div>
 				<div class="nttablecellnarrow">Day</div>
 				<div class="nttablecellnarrow">Time Slot</div>
 				<div class="nttablecellnarrow">Match Duration</div>
@@ -388,6 +386,8 @@ function create_group_table_row( $group ) {
 			<form method="post" class="groupForm">
 				<div class="grouptablecellnarrow">
 					<input type="text" name="groupName" value="<?php echo $group->groupName;?>"/>
+					<div class="nttablecellnarrow"> <?php $user_info = get_userdata($group->groupOrganizerID);
+															echo $user_info->user_login;  ?></div>
 					<div class="nttablecellnarrow"> <?php nt_create_day_menu( "groupDay" , $group->groupDay );?></div>
 					<div class="nttablecellnarrow"> <?php nt_create_timeslot_menu( "groupTime", $group->groupTime ); ?></div>
 					<div class="nttablecellnarrow"> <?php nt_create_matchduration_menu( "groupMatchDuration", $group->groupMatchDuration  ); ?></div>
