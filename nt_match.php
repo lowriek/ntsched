@@ -20,7 +20,6 @@
 		player2Status ENUM('confirmed', 'unconfirmed', 'needsub'),
 		player3Status ENUM('confirmed', 'unconfirmed', 'needsub'),
 		FOREIGN KEY(groupID) references $group_table_name(groupID),
-
 		PRIMARY KEY(matchID)
 	) engine = InnoDB;";
  **/
@@ -122,7 +121,6 @@ function nt_match_handle_form( /* $group_name */ ) {
 	); // put the form input into an array
 
 
-
 	switch ( $_POST['matchAction'] ) {
 		case "Update Match":
 			updateMatch( $thismatch );
@@ -132,8 +130,8 @@ function nt_match_handle_form( /* $group_name */ ) {
 			deleteMatch( $thismatch );
 			break;
 			
-		case "Add Match":
-			addMatch( $thismatch );
+		case "Create Next Month's Matches":
+			addMatches(  );
 			break;
 
 		case "Show Players":
@@ -149,14 +147,15 @@ function nt_match_handle_form( /* $group_name */ ) {
 /**************************/
 
 /** Event_handler_form helpers - these are CRUD for DB */
-function addMatch( $thismatch ) {
+function addMatches(  ) {
 	global $wpdb;
 	global $debug;
 
 	if ( ! $debug ){
-			echo "[addMatch] ";
-			echo "<pre>"; print_r($_POST); echo "</pre>";
+			echo "[addMatches] ";
 	}
+
+
 	
 	$table_name = $wpdb->prefix . "match";
 	$rows_affected = $wpdb->insert( $table_name, $thismatch );
@@ -174,6 +173,22 @@ function addMatch( $thismatch ) {
 	return $rows_affected;
 
 } // adds a match to the table if addMatch is tagged
+
+function find_match_dates( $thismonth, $thisyear, $groupiddayofweek){
+	// find today's date
+	// get the month
+	// figure out what the first day of the week the first day of this month is
+	// find the day of the week for the groupid
+
+	// so now, find the first groupid day of the week, and push it into an array.
+	// find the next groupid day of the week, and push it into an array.
+	// ... and so on, until you get to the end of the month.
+
+	// return the array.
+}
+
+$dayofweek = date('w', strtotime($date));
+$result    = date('Y-m-d', strtotime(($day - $dayofweek).' day', strtotime($date)));
 
 function updateMatch( $thismatch ) {
 	global $wpdb;
