@@ -83,7 +83,7 @@ function nt_display_matches( /* $group_name */ ) {
 function nt_match_handle_form( /* $group_name */ ) { 
 
 
-	if ( ! isset( $_POST['match_action'] ) ) return;
+	if ( ! isset( $_POST['nt_match_action'] ) ) return;
 
 
 	global $debug;
@@ -95,8 +95,8 @@ function nt_match_handle_form( /* $group_name */ ) {
 	/** Pull common data out of the form, get specific data in handlers if necessary **/
 	$thismatch = array( 
 				/** match_id will be null on insert **/
-				'match_id'		=>  ( isset( $_POST[ 'nt_match_id' ] ) ? $_POST[ 'nt_match_id' ]: "" ),
-				'match_date' 	=>  $_POST[ 'nt_match_date' ],
+				'nt_match_id'		=>  ( isset( $_POST[ 'nt_match_id' ] ) ? $_POST[ 'nt_match_id' ]: "" ),
+				'nt_match_date' 	=>  $_POST[ 'nt_match_date' ],
 
 	); // put the form input into an array
 
@@ -171,10 +171,10 @@ function nt_add_match_placeholder ( $thisgroup ) {
 
 	switch ( $thisgroup['nt_group_day'] ){
 		case 0:	
-			$next_match_unix_timestamp = strtotime( "next Monday"); 
+			$next_match_unix_timestamp = strtotime( "first Monday next month"); 
 			break;
 		case 1:	
-			$next_match_unix_timestamp = strtotime( "next Tuesday"); 
+			$next_match_unix_timestamp = strtotime( "first Tuesday next month"); 
 			break;
 		case 2:	
 			$next_match_unix_timestamp = strtotime( "next Wednesday"); 
@@ -207,18 +207,6 @@ function nt_add_match_placeholder ( $thisgroup ) {
 	return nt_add_match( $thismatch ) ;
 }
 
-function find_match_dates( $thismonth, $thisyear, $groupiddayofweek){
-	// find today's date
-	// get the month
-	// figure out what the first day of the week the first day of this month is
-	// find the day of the week for the groupid
-
-	// so now, find the first groupid day of the week, and push it into an array.
-	// find the next groupid day of the week, and push it into an array.
-	// ... and so on, until you get to the end of the month.
-
-	// return the array.
-}
 /*
 $dayofweek = date('w', strtotime($date));
 $result    = date('Y-m-d', strtotime(($day - $dayofweek).' day', strtotime($date)));

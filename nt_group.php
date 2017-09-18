@@ -103,7 +103,7 @@ function nt_group_handle_form(  ) {
 	global $debug;
 
 	if (  $debug ){
-			echo "[nt_group_handle_form] ";
+			echo "[nt_group_handle_form] Post data";
 			echo "<pre>"; print_r($_POST); echo "</pre>";
 	}
 
@@ -114,10 +114,10 @@ function nt_group_handle_form(  ) {
 	/** Pull common data out of the form, get specific data in handlers if necessary **/
 	$thisgroup = array( 
 				/** matchID will be null on insert **/
-				'nt_group_id'		=>  ( isset( $_POST['nt_group_id'] )   ? $_POST['nt_group_id']   : "" ),
+				'nt_group_id'	=>  ( isset( $_POST['nt_group_id'] )   ? $_POST['nt_group_id']   : "" ),
 				'nt_group_name'	=>  ( isset( $_POST['nt_group_name'] ) ? $_POST['nt_group_name'] : "" ),
-				'nt_group_day'     =>  ( isset( $_POST['nt_group_day'] )  ? $_POST['nt_group_day']  : "" ),
-				'nt_group_time' 	=>  ( isset( $_POST['nt_group_time'] ) ? $_POST['nt_group_time'] : "" ),
+				'nt_group_day'  =>  ( isset( $_POST['nt_group_day'] )  ? $_POST['nt_group_day']  : "" ),
+				'nt_group_time' =>  ( isset( $_POST['nt_group_time'] ) ? $_POST['nt_group_time'] : "" ),
 				'nt_group_match_duration'  =>  
 									( isset( $_POST['nt_group_match_duration'] ) 
 																   ? $_POST['nt_group_match_duration']	: "" )
@@ -224,10 +224,10 @@ function nt_add_group( $thisgroup ) {
 	if( $debug ) {
 		echo "[nt_add_group] success $rows_affected";
 	}
-						
+
 	if ( 0 == nt_add_match_placeholder ( $thisgroup ) ){
 		if ( $debug ){
-			echo "[nt_add_group] Failed added placeholder match ";
+			echo "[nt_add_group] Failed adding placeholder match ";
 			echo "<pre>"; print_r($_POST); echo "</pre>";
 		}
 		return false;
@@ -245,17 +245,31 @@ function nt_add_group( $thisgroup ) {
 function nt_update_group( $thisgroup ) {
 	global $wpdb;
 	
+	global $debug;
+	if ( ! $debug ){
+			echo "[nt_update_group] ";
+			echo "<pre>"; print_r( $thisgroup ); echo "</pre>";
+	}
+
 	$table_name = $wpdb->prefix . constant( "GROUP_TABLE_NAME" );
-	$where = array( 'group_id' => $thisgroup['group_id'] );
-	$wpdb->update( $table_name, $thisgroup, $where );
+	$where = array( 'nt_group_id' => $thisgroup['nt_group_id'] );
+	$rows_affected =  $wpdb->update( $table_name, $thisgroup, $where );
+	return $rows_affected;
 } 
 
 // delete a group with a matching groupID
 function nt_delete_group( $thisgroup ) {
 	global $wpdb;
-	
+
+	global$debug;
+	if ( ! $debug ){
+			echo "[nt_delete_group] ";
+			echo "<pre>"; print_r( $thisgroup ); echo "</pre>";
+	}
+
 	$table_name = $wpdb->prefix . constant( "GROUP_TABLE_NAME" );
-	$wpdb->delete( $table_name, $thisgroup );
+	$rows_affected = $wpdb->delete( $table_name, $thisgroup );
+	return $rows_affected;
 } 
 
 
@@ -263,7 +277,7 @@ function nt_show_group( $thisgroup ) {
 	global $debug;
 
 	if ($debug) {
-		echo "[nw_show_group] ";
+		echo "[nt_show_group] ";
 		echo "<pre>"; print_r( $thisgroup ); echo "</pre>";
 	}
 }
@@ -331,7 +345,7 @@ function nt_create_group_table_row( $thisgroup ) {
 					<div class="nttablecellnarrow"> <?php nt_create_timeslot_menu( "nt_group_time", $thisgroup->nt_group_time ); ?></div>
 					<div class="nttablecellnarrow"> <?php 
 								nt_create_match_duration_menu( "nt_group_match_duration", $thisgroup->nt_group_match_duration  ); ?></div>
-					<input type="hidden" name="group_id" value="<?php echo $thisgroup->nt_group_id;?>"/>
+					<input type="hidden" name="nt_group_id" value="<?php echo $thisgroup->nt_group_id;?>"/>
 				</div>		
 				<div class="nttablecellauto">
 					<input type="submit" name="nt_group_action" value="Update Group"/>
