@@ -20,88 +20,10 @@
 
 /* These court times are from tennisbookings, note that 90 minutes is not available for all slots */
 
-/* nt_timeslot support *********************/
-global $nt_timeslots;
-$nt_timeslots = array (
-    	0=>"7am",
-    	"8am",
-    	"9am",
-    	"10am",
-    	"11am",
-    	"12pm",
-    	"1:30pm",
-    	"2:30pm",
-    	"3:30pm",
-    	"4:30pm",
-    	"5:30pm",
-    	"6:30pm",
-    	"7:00pm",
-    	"7:30pm",
-    	"8:00pm",
-    	"8:30pm",
-    	"9:00pm",
-    	"9:30pm"
-    );
-function nt_create_timeslot_menu( $name, $selected = 0 ){
-	global $nt_timeslots;
-	nt_create_menu ( $name, $nt_timeslots, $selected ); 
-
-}
-function nt_get_timeslot ( $timeslotnumber ) { 
-	global $nt_timeslots;
-	return $nt_timeslots[$timeslotnumber];
-}
-/* END nt_timeslot support ******************/
-
-
-
-/* nt_dayofweek support *********************/
-global $nt_dayofweek;
-$nt_dayofweek = array (
-    	 0=>"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
-    );
-function nt_create_day_menu( $name, $selected = 0 ){
-	// corresponds to MySQL day of the week
-	global $nt_dayofweek;
-	nt_create_menu ( $name, $nt_dayofweek, $selected ); 
-}
-function nt_get_day ( $daynumber ) { 
-	global $nt_dayofweek;
-	return $nt_dayofweek[$daynumber];
-}
-/* END nt_dayofweek support *********************/
 
 
 
 
-
-/* nt_matchDuration support *********************/
-global $nt_matchDuration;
-$nt_matchDuration = array (
-    	60=>"60", 90=>"90"
-    );
-function nt_create_matchduration_menu( $name,  $selected = 60 ){
-	global $nt_matchDuration;
-	nt_create_menu ( $name, $nt_matchDuration , $selected ); 
-}
-function nt_get_matchduration ( $matchdurationnumber ) { 
-	global $nt_matchDuration;
-	return $nt_matchDuration[$matchdurationnumber];
-}
-/* END   nt_matchDuration support *********************/
-
-
-function nt_create_menu( $name, $contents, $selected )
-{
-	echo "<select name=\"$name\">";
-    foreach ( $contents as $key => $value ) {
-    	if ( $selected == $key )
-    		echo "<option value=\"$key\" selected > $value </option>\n";
-    	else
-			echo "<option value=\"$key\"> $value </option>\n";
-	}
-	echo "</select>";
-}
 
 /** nt_group_create_sql
  ** creates the sql for the group table, then creates the table in the db.
@@ -109,13 +31,13 @@ function nt_create_menu( $name, $contents, $selected )
 function nt_group_create_table ( $group_table_name ) {
 	  
 	$sql = 	"CREATE TABLE $group_table_name(
-		groupID    int not null auto_increment,
-		groupOrganizerID int,
-		groupName  varchar(50),
-		groupDay int,   /*(0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday) */
-		groupTime int,  /* see array above */
-		groupMatchDuration int,
-		PRIMARY KEY(groupID)
+		nt_group_id    int not null auto_increment,
+		nt_group_organizer_id int,
+		nt_group_name  varchar(50),
+		nt_group_day int,   /*(0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday) */
+		nt_group_time int,  /* see array above */
+		nt_group_match_duration int,
+		PRIMARY KEY(nt_group_id)
 	) engine = InnoDB;";
 	dbDelta( $sql );
 
@@ -137,9 +59,7 @@ function nt_group_hub(  ) {
 		global $debug;
 
 		/* handle form request if pending */
-		if ( isset( $_POST['groupAction'] ) ) {
-			nt_group_handle_form( $_POST['groupAction'] );
-		} 
+		nt_group_handle_form( );
 
 		nt_display_groups();
 }
@@ -157,18 +77,18 @@ function nt_display_groups( ) {
 	$query = "SELECT * FROM $group_table_name";  /* KBL todo: add for this user */
 	$allgroups = $wpdb->get_results( $query );
 
-	create_group_table_header(); 
-	create_group_add_row( /* $group_name */ );
+	nt_create_group_table_header(); 
+	nt_create_group_add_row( /* $group_name */ );
 
 	if ( $allgroups ) {
 		foreach ( $allgroups as $thisgroup ) {
-			create_group_table_row( $thisgroup );
+			nt_create_group_table_row( $thisgroup );
 		}
 	} else { 
 		?><h3>No groups.  Add one!</h3><?php
 	}
 			
-	create_group_table_footer(); // end the table
+	nt_create_group_table_footer(); // end the table
 }
 
 /**
@@ -178,7 +98,7 @@ function nt_display_groups( ) {
  * This function is going to add a match for the passed $group_letters
  * This function is called from nt_??? with $group_name 
  **/
-function nt_group_handle_form( $action ) { 
+function nt_group_handle_form(  ) { 
 
 	global $debug;
 
@@ -187,55 +107,54 @@ function nt_group_handle_form( $action ) {
 			echo "<pre>"; print_r($_POST); echo "</pre>";
 	}
 
-
-/*    CREATE TABLE $group_table_name(
-		groupID    int not null auto_increment,
-		organizerID int,
-		groupName varchar(40),
-		groupDay int,   (0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday) 
-		groupTime int,  
-		groupMatchDuration ENUM ('sixty', 'ninety'),
-		PRIMARY KEY(groupID)
-	) engine = InnoDB;";*/  
+	if ( ! isset( $_POST['nt_group_action'] ) ) {
+		return;
+	} 
 
 	/** Pull common data out of the form, get specific data in handlers if necessary **/
 	$thisgroup = array( 
 				/** matchID will be null on insert **/
-				'groupID'		=>  ( isset( $_POST['groupID']   ) ? $_POST['groupID']   : "" ),
-				'groupName'		=>  ( isset( $_POST['groupName'] ) ? $_POST['groupName'] : "" ),
-				'groupDay'      =>  ( isset( $_POST['groupDay']  ) ? $_POST['groupDay']  : "" ),
-				'groupTime' 	=>  ( isset( $_POST['groupTime'] ) ? $_POST['groupTime'] : "" ),
-				'groupMatchDuration'  =>  
-									( isset( $_POST['groupMatchDuration'] ) 
-																   ? $_POST['groupMatchDuration']	: "" )
+				'nt_group_id'		=>  ( isset( $_POST['nt_group_id'] )   ? $_POST['nt_group_id']   : "" ),
+				'nt_group_name'	=>  ( isset( $_POST['nt_group_name'] ) ? $_POST['nt_group_name'] : "" ),
+				'nt_group_day'     =>  ( isset( $_POST['nt_group_day'] )  ? $_POST['nt_group_day']  : "" ),
+				'nt_group_time' 	=>  ( isset( $_POST['nt_group_time'] ) ? $_POST['nt_group_time'] : "" ),
+				'nt_group_match_duration'  =>  
+									( isset( $_POST['nt_group_match_duration'] ) 
+																   ? $_POST['nt_group_match_duration']	: "" )
 
 	); // put the form input into an array
 
-	if ( $debug ) showgroup( $thisgroup );
+	if ( $debug ) nt_show_group( $thisgroup );
 
-	
-	
-	switch ( $action ) {
+	switch ( $_POST['nt_group_action'] ) {
 		case "Update Group":
 		case "Delete Group":
 		case "Add Group":
-			$thisgroup['groupOrganizerID'] = nt_is_user_organizer ();
-			if ( false == $thisgroup['groupOrganizerID'] ) {
-				echo "<h2>sorry you are not an organizer, no permission to modify groups</h2>";
+
+			$thisgroup['nt_group_organizer_id'] = nt_is_user_organizer ();
+			if ( false == $thisgroup['nt_group_organizer_id'] ) {
+				echo "<h3>sorry you are not an organizer, no permission to modify groups</h3>";
 				return;
 			} 
-			switch ( $action ) {
+			switch ( $_POST['nt_group_action'] ) {
 				case "Update Group":
-					updateGroup( $thisgroup );
+					if ( ! nt_update_group( $thisgroup ) ) {
+						echo "<h3>Update Failed</h3>";
+					}
 					break;
 
 				case "Delete Group":
-					deleteGroup( $thisgroup );
+					if ( ! nt_delete_group( $thisgroup ) ) {
+						echo "<h3>Delete Failed</h3>";
+					}
 					break;
 
 				case "Add Group":
-					addGroup( $thisgroup );
+					if ( ! nt_add_group( $thisgroup ) ) {
+						echo "<h3>Add Failed</h3>";
+					}
 					break;
+
 				default:
 					break; // really can't get here...
 				
@@ -243,7 +162,7 @@ function nt_group_handle_form( $action ) {
 			break;
 
 		case "Show Group details":
-			showGroup( $thisgroup );
+			nt_show_group( $thisgroup );
 			break;
 			
 		default:
@@ -281,42 +200,58 @@ function nt_is_user_organizer(){
 }
 
 /** Event_handler_form helpers - these are CRUD for DB */
-function addGroup( $thisgroup ) {
+function nt_add_group( $thisgroup ) {
 	global $wpdb;
 	global $debug;
 
 	if ( ! $debug ){
-			echo "[addGroup] ";
+			echo "[nt_add_group] ";
 			echo "<pre>"; print_r($_POST); echo "</pre>";
 	}
 	
 	$rows_affected = $wpdb->insert( $wpdb->prefix . constant( "GROUP_TABLE_NAME" ), $thisgroup );
 	
-	if (0 == $rows_affected ) {
-		echo "INSERT ERROR for " . $thisgroup['groupDay'] . " " .$thisgroup['groupTime'];
+	if ( 0 == $rows_affected ) {
+		echo "INSERT ERROR for " . $thisgroup[ 'nt_group_name' ] ;
 		if ( $debug ){
-			echo "[addGroup] Fail ";
+			echo "[nt_add_group] Fail ";
 			echo "<pre>"; print_r($_POST); echo "</pre>";
 		}
+		return false;
+	}
+	$thisgroup[ 'nt_group_id' ] = $wpdb->insert_id;
+
+	if( $debug ) {
+		echo "[nt_add_group] success $rows_affected";
+	}
+						
+	if ( 0 == nt_add_match_placeholder ( $thisgroup ) ){
+		if ( $debug ){
+			echo "[nt_add_group] Failed added placeholder match ";
+			echo "<pre>"; print_r($_POST); echo "</pre>";
+		}
+		return false;
 	}
 
-	
+	if( $debug ) {
+		echo "[nt_add_group] nt_add_match_placeholder success ";
+	}
 
 	return $rows_affected;
 
 } 
 
 // updates a group in the table 
-function updateGroup( $thisgroup ) {
+function nt_update_group( $thisgroup ) {
 	global $wpdb;
 	
 	$table_name = $wpdb->prefix . constant( "GROUP_TABLE_NAME" );
-	$where = array( 'groupID' => $thisgroup['groupID'] );
+	$where = array( 'group_id' => $thisgroup['group_id'] );
 	$wpdb->update( $table_name, $thisgroup, $where );
 } 
 
 // delete a group with a matching groupID
-function deleteGroup( $thisgroup ) {
+function nt_delete_group( $thisgroup ) {
 	global $wpdb;
 	
 	$table_name = $wpdb->prefix . constant( "GROUP_TABLE_NAME" );
@@ -324,16 +259,20 @@ function deleteGroup( $thisgroup ) {
 } 
 
 
-function showgroup( $thisgroup ) {
-	echo "[showgroup] ";
-	echo "<pre>"; print_r($thisgroup); echo "</pre>";
+function nt_show_group( $thisgroup ) {
+	global $debug;
+
+	if ($debug) {
+		echo "[nw_show_group] ";
+		echo "<pre>"; print_r( $thisgroup ); echo "</pre>";
+	}
 }
 
 /** 
  ** create_match_table_header()
  ** This function creates the header div for the list of matches.
  **/
-function create_group_table_header() {
+function nt_create_group_table_header() {
 	?>
 		<div id="groupError"></div>
 		<div class="nttable">
@@ -347,7 +286,7 @@ function create_group_table_header() {
 			</div>
 	<?php
 }
-function create_group_table_footer() {
+function nt_create_group_table_footer() {
 	?></div><?php
 }
 
@@ -359,16 +298,16 @@ function create_group_table_footer() {
  **/
 
 //KBL TODO Start here to fix add group form
-function create_group_add_row() {
+function nt_create_group_add_row() {
 	?>
 		<div class="ntaddrow">
 			<form method="post" class="groupForm">
-				<div class="nttablecellnarrow"><input type="text" name="groupName" value="Group Name" /></div>
-				<div class="nttablecellnarrow"> <?php nt_create_day_menu( "groupDay" ); ?></div>
-				<div class="nttablecellnarrow"> <?php nt_create_timeslot_menu( "groupTime" ); ?></div>
-				<div class="nttablecellnarrow"> <?php nt_create_matchduration_menu( "groupMatchDuration" ); ?></div>
+				<div class="nttablecellnarrow"><input type="text" name="nt_group_name" value="Group Name" /></div>
+				<div class="nttablecellnarrow"> <?php nt_create_day_menu( "nt_group_day" ); ?></div>
+				<div class="nttablecellnarrow"> <?php nt_create_timeslot_menu( "nt_group_time" ); ?></div>
+				<div class="nttablecellnarrow"> <?php nt_create_match_duration_menu( "nt_group_match_duration" ); ?></div>
 				<div class="nttablecellauto">
-				<input type="submit" name="groupAction" id="addGroupButton" value="Add Group"/>
+				<input type="submit" name="nt_group_action" id="addGroupButton" value="Add Group"/>
 				</div>		
 			</form>
 		</div><!-- end nttableaddrow -->
@@ -380,25 +319,106 @@ function create_group_add_row() {
  ** this function creates one row of the list of groups.
  ** Dump the group passed with options to change group details.
  **/
-function create_group_table_row( $group ) {
+function nt_create_group_table_row( $thisgroup ) {
 	?>
 		<div class="nttablerow">
 			<form method="post" class="groupForm">
 				<div class="grouptablecellnarrow">
-					<input type="text" name="groupName" value="<?php echo $group->groupName;?>"/>
-					<div class="nttablecellnarrow"> <?php $user_info = get_userdata($group->groupOrganizerID);
+					<input type="text" name="nt_group_name" value="<?php echo $thisgroup->nt_group_name;?>"/>
+					<div class="nttablecellnarrow"> <?php $user_info = get_userdata($thisgroup->nt_group_organizer_id);
 															echo $user_info->user_login;  ?></div>
-					<div class="nttablecellnarrow"> <?php nt_create_day_menu( "groupDay" , $group->groupDay );?></div>
-					<div class="nttablecellnarrow"> <?php nt_create_timeslot_menu( "groupTime", $group->groupTime ); ?></div>
-					<div class="nttablecellnarrow"> <?php nt_create_matchduration_menu( "groupMatchDuration", $group->groupMatchDuration  ); ?></div>
-					<input type="hidden" name="groupID" value="<?php echo $group->groupID;?>"/>
+					<div class="nttablecellnarrow"> <?php nt_create_day_menu( "nt_group_day" , $thisgroup->nt_group_day );?></div>
+					<div class="nttablecellnarrow"> <?php nt_create_timeslot_menu( "nt_group_time", $thisgroup->nt_group_time ); ?></div>
+					<div class="nttablecellnarrow"> <?php 
+								nt_create_match_duration_menu( "nt_group_match_duration", $thisgroup->nt_group_match_duration  ); ?></div>
+					<input type="hidden" name="group_id" value="<?php echo $thisgroup->nt_group_id;?>"/>
 				</div>		
 				<div class="nttablecellauto">
-					<input type="submit" name="groupAction" value="Update Group"/>
-					<input type="submit" name="groupAction" value="Delete Group"/>
+					<input type="submit" name="nt_group_action" value="Update Group"/>
+					<input type="submit" name="nt_group_action" value="Delete Group"/>
 				</div>
 			</form>
 		</div>
 	<?php
+}
+
+
+/* nt_timeslot support *********************/
+global $nt_timeslots;
+$nt_timeslots = array (
+    	0=>"7am",
+    	"8am",
+    	"9am",
+    	"10am",
+    	"11am",
+    	"12pm",
+    	"1:30pm",
+    	"2:30pm",
+    	"3:30pm",
+    	"4:30pm",
+    	"5:30pm",
+    	"6:30pm",
+    	"7:00pm",
+    	"7:30pm",
+    	"8:00pm",
+    	"8:30pm",
+    	"9:00pm",
+    	"9:30pm"
+    );
+function nt_create_timeslot_menu( $name, $selected = 0 ){
+	global $nt_timeslots;
+	nt_create_menu ( $name, $nt_timeslots, $selected ); 
+
+}
+function nt_get_timeslot ( $timeslot_number ) { 
+	global $nt_timeslots;
+	return $nt_timeslots[ $timeslot_number ];
+}
+/* END nt_timeslot support ******************/
+
+
+
+/* nt_dayofweek support *********************/
+global $nt_day_of_week;
+$nt_day_of_week = array (
+    	 0=>"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+    );
+function nt_create_day_menu( $name, $selected = 0 ){
+	// corresponds to MySQL day of the week
+	global $nt_day_of_week;
+	nt_create_menu ( $name, $nt_day_of_week, $selected ); 
+}
+function nt_get_day ( $day_number ) { 
+	global $nt_day_of_week;
+	return $nt_day_of_week[ $day_number ];
+}
+/* END nt_dayofweek support *********************/
+
+
+/* nt_match_duration support *********************/
+global $nt_match_duration;
+$nt_match_duration = array (
+    	60=>"60", 90=>"90"
+    );
+function nt_create_match_duration_menu( $name,  $selected = 60 ){
+	global $nt_match_duration;
+	nt_create_menu ( $name, $nt_match_duration , $selected ); 
+}
+function nt_get_match_duration ( $match_duration_number ) { 
+	global $nt_match_duration;
+	return $nt_match_duration[ $match_duration_number ];
+}
+/* END   nt_match_duration support *********************/
+
+function nt_create_menu( $name, $contents, $selected )
+{
+	echo "<select name=\"$name\">";
+    foreach ( $contents as $key => $value ) {
+    	if ( $selected == $key )
+    		echo "<option value=\"$key\" selected > $value </option>\n";
+    	else
+			echo "<option value=\"$key\"> $value </option>\n";
+	}
+	echo "</select>";
 }
 ?>
